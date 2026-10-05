@@ -1,0 +1,72 @@
+name: Release
+
+# Push a tag ARI_Installer_v<ver> to build the installer for every platform and publish it as Latest.
+# Before tagging, edit .github/release-notes/installer.md — its contents become the changelog verbatim.
+
+on:
+  push:
+    tags:
+      - "ARI_Installer_v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { id: mac,   os: macos-latest,  flags: "--mac" }              # dmg + native codesign
+          - { id: other, os: ubuntu-latest, flags: "--win --linux" }      # AppImage native, win via wine
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync tag version into package.json
+        run: |
+          V="${GITHUB_REF_NAME#ARI_Installer_v}"
+          tmp="$(mktemp)"
+          jq --arg v "$V" '.version = $v' package.json > "$tmp" && mv "$tmp" package.json
+
+      - uses: oven-sh/setup-bun@v2
+
+      # electron-builder runs rcedit via wine to stamp the Windows portable .exe on the Linux runner.
+      - name: Install wine (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends wine wine32 wine64 || sudo apt-get install -y --no-install-recommends wine
+
+      - run: bun install
+      - run: bunx electron-builder ${{ matrix.flags }} --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.id }}
+          path: |
+            dist/ARIInstaller-*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${GITHUB_REF_NAME#ARI_Installer_v}"
+          mapfile -t FILES < <(find dist -type f -name 'ARIInstaller-*')
+          echo "Uploading: ${FILES[*]}"
+          gh release create "$GITHUB_REF_NAME" \
+            --title "A·R·I Installer v$V" \
+            --notes-file .github/release-notes/installer.md \
+            --latest \
+            "${FILES[@]}"

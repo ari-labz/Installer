@@ -1,0 +1,40 @@
+{
+  "name": "ari-installer",
+  "version": "0.2.0",
+  "description": "A.R.I Installer — installs the A.R.I Server and A.R.I Desktop",
+  "author": "Xywren",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "ai.ari.installer",
+    "productName": "A.R.I Installer",
+    "icon": "assets/icon.png",
+    "directories": {
+      "output": "dist"
+    },
+    "files": ["src/**/*", "assets/**/*"],
+    "afterPack": "./afterPack.js",
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns",
+      "identity": null,
+      "artifactName": "ARIInstaller-mac.${ext}"
+    },
+    "win": {
+      "target": "portable",
+      "artifactName": "ARIInstaller-win.${ext}"
+    },
+    "linux": {
+      "target": "AppImage",
+      "artifactName": "ARIInstaller-linux.${ext}"
+    }
+  }
+}
