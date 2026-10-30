@@ -1,4 +1,3 @@
-One installer for both A·R·I apps:
+Fix: the installer now lists every server release.
 
-- Install and update the A·R·I Server and A·R·I Desktop from a single app, using the tabs at the top.
-- The installer now has its own releases, separate from the Server and Desktop apps.
+- Server releases from 0.8.3 onward (0.9.0, 0.9.1 and the rest) were missing from the list because they are tagged `v<ver>` rather than `ARI_Server_v<ver>`. Both are accepted now.

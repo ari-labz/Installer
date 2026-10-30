@@ -34,6 +34,8 @@ const COMPONENTS = {
         label:        "Server",
         repo:         "A.R.I",
         prefix:       "ARI_Server_v",
+        // Releases before 0.8.3 were tagged with the prefix; later ones are plain v<ver>. The zip names keep the prefix.
+        tagPrefixes:  ["ARI_Server_v", "v"],
         shortcutName: "A.R.I",
         macApp:       "/Applications/A.R.I.app",
         winLauncher:  "ari-launch.cmd",
@@ -108,7 +110,8 @@ function component(id) {
     return c
 }
 
-const verFromTag = (c, tag) => tag.slice(c.prefix.length)
+const tagPrefixOf = (c, tag) => (c.tagPrefixes ?? [c.prefix]).find(p => tag.startsWith(p))
+const verFromTag  = (c, tag) => tag.slice(tagPrefixOf(c, tag).length)
 
 // ── Window ────────────────────────────────────────────────────────────────────
 
@@ -176,7 +179,7 @@ ipcMain.handle("fetch-releases", async (_, id, token) => {
         throw new Error("No releases found on GitHub.")
 
     const list = releases
-        .filter(r => !r.draft && r.tag_name.startsWith(c.prefix))
+        .filter(r => !r.draft && tagPrefixOf(c, r.tag_name))
         .sort((a, b) => compareVersions(verFromTag(c, b.tag_name), verFromTag(c, a.tag_name)))
         .map(r => ({
             tagName:    r.tag_name,

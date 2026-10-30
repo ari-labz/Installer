@@ -1,6 +1,6 @@
 {
   "name": "ari-installer",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A.R.I Installer — installs the A.R.I Server and A.R.I Desktop",
   "author": "Xywren",
   "private": true,
